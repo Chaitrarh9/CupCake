@@ -78,4 +78,40 @@ exports.removeFromCart = (req, res) => {
       res.status(500).json({ message: "Error removing item", error });
     });
 };
+
+exports.updateCart = (req, res) => {
+    const { shoppingcartId, cakeId, quantity } = req.body;
+ 
+    if (!shoppingcartId || !cakeId || quantity ===undefined) {
+        return res.status(400).json({ message: 'Invalid input data' });
+    }
+    
+    ShoppingCart.findById(shoppingcartId)
+        .then(cart => {
+          console.log(cart)
+            if (!cart) {
+                return res.status(404).json({ message: 'Cart not found' });
+            }
+            return CartItem.findOne({shoppingcartId, cakeId})
+          })
+          .then(cartItem=>{
+            if(cartItem){
+              cartItem.quantity= quantity;
+              return cartItem.save();
+            }else{
+              const newCartItem = new CartItem({shoppingcartId,cakeId, quantity})
+              return newCartItem.save()
+            }
+            
+          })
+      .then(updatedCartItem => {
+          if (updatedCartItem) {
+              res.status(200).json({ message: 'Cart updated successfully', cartItem: updatedCartItem });
+          }
+      })
+      .catch(error => {
+          console.error('Error updating cart:', error);
+          res.status(500).json({ message: 'Server error', error: error.message });
+      });
+};
  
